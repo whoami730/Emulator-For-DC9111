@@ -2,7 +2,7 @@ import sys
 from typing import Any
 import numpy as np
 
-mem = np.zeros(65536, dtype=np.uint8)
+mem = np.full(65536, 0xFF, dtype=np.uint8)
 regs = np.zeros(16, dtype=np.uint8)
 ip = np.uint16(0)
 sp = np.uint8(0x80)
@@ -16,7 +16,8 @@ def set_flags(val1: np.uint8, val2: np.uint8):
     res_uns = val1-val2
 
     # [res == 0, val1 < val2, res < 0, ]
-    pass
+    raise NotImplementedError
+    # TODO
 
 
 def ADD(rx, ry):
@@ -171,7 +172,7 @@ def ST(rx, ry, rz):
 def HALT(*args):
     print("Halting...")
     print(
-        f"Machine State : {mem[:10]=} {regs=} {ip=} {sp=} {ret_stack=} {flags=}")
+        f"Machine State : {bytes(mem[:100])=} {regs=} {ip=} {sp=} {ret_stack=} {flags=}")
     exit(0)
 
 
@@ -277,5 +278,6 @@ def load(file: str):
 load(sys.argv[1])
 while (ip <= 0xFFFF):
     instr, sz, args = parse()
-    print(f"Executing instruction at {ip} : {instr.__name__},{args}")
+    print(
+        f"Executing instruction at {ip} : {instr.__name__},{args},{mem[ip:ip+sz]}")
     process(instr, sz, args)
