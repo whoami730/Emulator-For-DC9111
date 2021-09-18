@@ -9,16 +9,22 @@ sp = np.uint8(0x80)
 ret_stack = []
 flags = np.zeros(8, dtype=np.bool_)
 ZF, CF, SF, OF = 0, 1, 2, 3
+IN = open('in','rb')
+OUT = open('out','wb')
 
+def concat(bits1: np.uint8, bits2: np.uint8):
+    return (np.uint16(bits1) << 8) + np.uint16(bits2)
 
 def set_flags(val1: np.uint8, val2: np.uint8):
     res = np.int8(val1)-np.int8(val2)
-    res_uns = val1-val2
 
-    # [res == 0, val1 < val2, res < 0, ]
-    raise NotImplementedError
-    # TODO
+    flags[:4] = [res == 0, val1 < val2, res < 0, (res < 0 and np.int8(val1) > 0 and np.int8(val2) < 0) or (res > 0 and np.int8(val1) < 0 and np.int8(val2) > 0)]
 
+def LD(rx, ry, rz):
+    regs[rz] = mem[concat(regs[rx], regs[ry])]
+
+def ST(rx, ry, rz):
+    mem[concat(regs[rx], regs[ry])] = regs[rz]
 
 def ADD(rx, ry):
     regs[rx] += regs[ry]
@@ -58,6 +64,9 @@ def OR(rx, ry):
 
 def XOR(rx, ry):
     regs[rx] ^= regs[ry]
+
+def MOV(rx, ry):
+    regs[rx] = regs[ry]
 
 
 def ADDI(rx, imm):
@@ -99,6 +108,9 @@ def ORI(rx, imm):
 def XORI(rx, imm):
     regs[rx] ^= imm
 
+def MOVI(rx, imm):
+    regs[rx] = imm
+
 
 def CMP(rx, ry):
     set_flags(regs[rx], regs[ry])
@@ -122,21 +134,9 @@ def JNE(addr):
     if not flags[ZF]:
         JMP(addr)
 
-
-def JB(addr):
-    if flags[CF]:
-        JMP(addr)
-
-
-def JA(addr):
-    if not flags[CF] and not flags[ZF]:
-        JMP(addr)
-
-
 def JL(addr):
     if flags[SF] != flags[OF]:
         JMP(addr)
-
 
 def JG(addr):
     if flags[SF] == flags[OF] and not flags[ZF]:
@@ -156,18 +156,13 @@ def RET():
     ip = ret_stack.pop()
     sp += 2
 
+def INPUT(rx):
+    global IN
+    regs[rx] = np.frombytes(IN.read(1),np.uint8)
 
-def concat(bits1: np.uint8, bits2: np.uint8):
-    return (np.uint16(bits1) << 8) + np.uint16(bits2)
-
-
-def LD(rx, ry, rz):
-    regs[rz] = mem[concat(regs[rx], regs[ry])]
-
-
-def ST(rx, ry, rz):
-    mem[concat(regs[rx], regs[ry])] = regs[rz]
-
+def OUTPUT(rx):
+    global OUT
+    OUT.write(regs[rx].tobytes())
 
 def HALT(*args):
     print("Halting...")
@@ -189,7 +184,11 @@ def parse():
 
     op = mem[ip] >> 4
 
-    if (op == 0):
+    if (0 <= op <= 1):
+        sz = 2
+        args = [mem[ip] % 2**4, mem[ip+1] >> 4, mem[ip+1] % 2**4]
+        instr = [LD, ST][op]
+    if (op == 2):
         func = mem[ip] % 2**4
         sz = 2
         args = [mem[ip+1] >> 4, mem[ip+1] % 2**4]
@@ -213,7 +212,9 @@ def parse():
             instr = OR
         elif (func == 9):
             instr = XOR
-    elif (op == 1):
+        elif (func == 10):
+            instr = MOV
+    elif (op == 3):
         func = mem[ip] % 2**4
         sz = 3
         args = [mem[ip+1] >> 4, mem[ip+2]]
@@ -237,18 +238,20 @@ def parse():
             instr = ORI
         elif (func == 9):
             instr = XORI
-    elif (op == 2):
+        elif (func == 10):
+            instr = MOVI
+    elif (op == 4):
         sz = 2
         args = [mem[ip] % 2**4, mem[ip+1]]
         instr = CMP
-    elif (op == 3):
+    elif (op == 5):
         sz = 2
         args = [mem[ip] % 2**4, mem[ip+1]]
         instr = CMPI
-    elif (4 <= op <= 10):
+    elif (6 <= op <= 10):
         sz = 3
         args = [(np.uint16(mem[ip+1]) << 8) + np.uint16(mem[ip+2])]
-        instr = [JMP, JE, JNE, JB, JA, JL, JG][op-4]
+        instr = [JMP, JE, JNE, JL, JG][op-4]
     elif (op == 11):
         sz = 3
         args = [concat(mem[ip+1], mem[ip+2])]
@@ -257,10 +260,14 @@ def parse():
         sz = 1
         args = []
         instr = RET
-    elif (13 <= op <= 14):
-        sz = 2
-        args = [mem[ip] % 2**4, mem[ip+1] >> 4, mem[ip+1] % 2**4]
-        instr = [LD, ST][op-13]
+    elif (op == 13):
+        sz = 1
+        args = [mem[ip]%2**4]
+        instr = INPUT
+    elif (op == 14):
+        sz = 1
+        args = [mem[ip]%2**4]
+        instr = OUTPUT
     elif (op == 15):
         sz = 1
         args = []

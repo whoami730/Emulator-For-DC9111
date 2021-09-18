@@ -4,7 +4,7 @@
 # addi r14, 0x1
 # subi r15, 0x42 <- key = -0x42
 
-hdr = "10 05 10 05 11 06 2f 10 e9 01 11 fa 42 "
+hdr = "30 05 10 25 11 26 2f 30 e9 01 31 fa 42 "
 flag = b"dc9111{3mu1ati0n_n0t_5o_6iff1cul7}"
 key = 190
 
@@ -24,7 +24,7 @@ for i in flag:
     # <do 14 times>
     for _ in range(14):
         x, y = hex(addr >> 8)[2:].zfill(2), hex(addr % 2**8)[2:].zfill(2)
-        ins = f"04 4e 06 5f 19 45 {x} 18 55 {y} d4 53 09 3f e4 53 "
+        ins = f"24 4e 26 5f 39 45 {x} 38 55 {y} 04 53 29 3f 14 53 "
         addr += 1
         hdr += ins
 
@@ -34,7 +34,7 @@ for i in flag:
     # addi r3, 0x1 <- lower nibble
     # st [r1 r2], r3
     # add r2, r14
-    b = f"09 33 10 30 {h} 02 30 10 30 {l} e1 23 00 2e"
+    b = f"29 33 30 30 {h} 22 30 30 30 {l} 11 23 20 2e"
 
     for j in b.split():
         hdr += hex(int(j, 16) ^ key)[2:].zfill(2)
