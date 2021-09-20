@@ -1,5 +1,5 @@
 #!/bin/bash
 
 touch in
-echo "random_stuff_here" >> in
-python3 emu.py rom1.rom
+echo -en '\x23' > in
+python3 emu.py $1

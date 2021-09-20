@@ -2,7 +2,7 @@ import sys
 from typing import Any
 import numpy as np
 
-mem = np.full(65536, 0xFF, dtype=np.uint8)
+mem = np.full(65536, 0, dtype=np.uint8)
 regs = np.zeros(16, dtype=np.uint8)
 ip = np.uint16(0)
 sp = np.uint8(0x80)
@@ -153,18 +153,21 @@ def CALL(addr):
 
 def RET():
     global ret_stack, ip, sp
-    ip = ret_stack.pop()
+    ip = ret_stack[0]
+    ret_stack = ret_stack[1:]
     sp += 2
 
 def INPUT(rx):
     global IN
-    regs[rx] = np.frombytes(IN.read(1),np.uint8)
+    regs[rx] = np.frombuffer(IN.read(1),np.uint8)
 
 def OUTPUT(rx):
     global OUT
     OUT.write(regs[rx].tobytes())
 
 def HALT(*args):
+    IN.close()
+    OUT.close()
     print("Halting...")
     print(
         f"Machine State : {bytes(mem[:100])=} {regs=} {ip=} {sp=} {ret_stack=} {flags=}")
@@ -251,7 +254,7 @@ def parse():
     elif (6 <= op <= 10):
         sz = 3
         args = [(np.uint16(mem[ip+1]) << 8) + np.uint16(mem[ip+2])]
-        instr = [JMP, JE, JNE, JL, JG][op-4]
+        instr = [JMP, JE, JNE, JL, JG][op-6]
     elif (op == 11):
         sz = 3
         args = [concat(mem[ip+1], mem[ip+2])]
