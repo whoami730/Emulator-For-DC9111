@@ -23,7 +23,7 @@ def transform(x):
 
 i = 0
 s = "Enter 1-byte key :"
-flag = "dc9111{h0p3_y0u_d1dn7_d0_1t_6y_h4nd}"
+flag = "dc_9111{h0p3_y0u_d1dn7_d0_1t_6y_h4nd}"
 key = np.uint8(0x23)
 
 inv_flag = []

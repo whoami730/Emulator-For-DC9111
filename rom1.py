@@ -5,7 +5,7 @@
 # subi r15, 0x42 <- key = -0x42
 
 hdr = "30 05 10 25 11 26 2f 30 e9 01 31 fa 42 "
-flag = b"dc9111{3mu1ati0n_n0t_5o_6iff1cul7}"
+flag = b"dc_9111{3mu1ati0n_n0t_5o_6iff1cul7}"
 key = 190
 
 addr = len(hdr.strip().split())
