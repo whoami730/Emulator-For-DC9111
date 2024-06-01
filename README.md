@@ -1,6 +1,6 @@
 # DC-v0.69 system
 
-We're given a manual for an old system and several `rom` files. We realise that we have been asked to build an emulator for the mentioned system supporting the CPU, the memory, serial I/O and all the mentioned instructions as well!
+We're given a [manual](manual.pdf) for an old system and several `rom` files. We realise that we have been asked to build an emulator for the mentioned system supporting the CPU, the memory, serial I/O and all the mentioned instructions as well!
 
 We observe that the given system consists of 16 general purpose registers, a 16-bit `IP` and two other 8-bit registers `SP` and `FLAGS`; the memory addresses range from 0 to 65535, and we have an additional data structure called `ret-stack` for holding return addresses.
 
